@@ -1,0 +1,6 @@
+@ModAS.Server_HostAddress = http://localhost:5071
+
+GET {{ModAS.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
