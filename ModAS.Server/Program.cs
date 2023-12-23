@@ -29,8 +29,8 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddSingleton<ModASConfiguration>();
 
-builder.Services.AddScoped<AuthenticationService>();
-builder.Services.AddScoped<AuthenticatedHomeserverProviderService>();
+builder.Services.AddSingleton<AuthenticationService>();
+builder.Services.AddSingleton<AuthenticatedHomeserverProviderService>();
 // builder.Services.AddScoped<UserContextService>();
 
 builder.Services.AddSingleton<TieredStorageService>(x => {

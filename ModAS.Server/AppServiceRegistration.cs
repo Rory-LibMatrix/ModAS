@@ -10,10 +10,10 @@ public class AppServiceRegistration {
     private const string ExtendedValidChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~+/";
 
     [JsonPropertyName("as_token")]
-    public string AsToken { get; set; } = RandomNumberGenerator.GetString(ExtendedValidChars, RandomNumberGenerator.GetInt32(512, 1024));
+    public string AppServiceToken { get; set; } = RandomNumberGenerator.GetString(ExtendedValidChars, RandomNumberGenerator.GetInt32(512, 1024));
 
     [JsonPropertyName("hs_token")]
-    public string HsToken { get; set; } = RandomNumberGenerator.GetString(ExtendedValidChars, RandomNumberGenerator.GetInt32(512, 1024));
+    public string HomeserverToken { get; set; } = RandomNumberGenerator.GetString(ExtendedValidChars, RandomNumberGenerator.GetInt32(512, 1024));
 
     [JsonPropertyName("id")]
     public string Id { get; set; } = "ModAS-"+RandomNumberGenerator.GetString(ValidChars, 5);

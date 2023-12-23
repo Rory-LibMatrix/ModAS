@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using ArcaneLibs.Extensions;
 using LibMatrix;
 using LibMatrix.Homeservers;
@@ -14,14 +15,17 @@ public class AuthenticatedHomeserverProviderService(
     AppServiceRegistration asRegistration
     ) {
     public HttpContext? _context = request.HttpContext;
-    public Dictionary<string, AuthenticatedHomeserverGeneric> KnownUsers { get; set; } = new();
+    public ConcurrentDictionary<string, AuthenticatedHomeserverGeneric> KnownUsers { get; set; } = new();
 
     public async Task<AuthenticatedHomeserverGeneric> GetImpersonatedHomeserver(string mxid) {
-        if (KnownUsers.TryGetValue(mxid, out var homeserver)) return homeserver;
-        var hs = await homeserverProviderService.GetAuthenticatedWithToken(config.ServerName, asRegistration.AsToken, config.HomeserverUrl);
-        await hs.SetImpersonate(mxid);
-        KnownUsers.TryAdd(mxid, hs);
-        return hs;
+        if (!KnownUsers.TryGetValue(mxid, out var homeserver)) {
+            homeserver = await homeserverProviderService.GetAuthenticatedWithToken(config.ServerName, asRegistration.AppServiceToken, config.HomeserverUrl);
+            KnownUsers.TryAdd(mxid, homeserver);
+        }
+        //var hs = await homeserverProviderService.GetAuthenticatedWithToken(config.ServerName, asRegistration.AsToken, config.HomeserverUrl);
+        await homeserver.SetImpersonate(mxid);
+        // KnownUsers.TryAdd(mxid, homeserver);
+        return homeserver;
     }
     
     public async Task<AuthenticatedHomeserverGeneric> GetHomeserver() {

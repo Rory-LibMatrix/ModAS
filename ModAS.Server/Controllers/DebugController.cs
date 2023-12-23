@@ -40,7 +40,7 @@ public class DebugController(ModASConfiguration config, AuthenticatedHomeserverP
                     await ahs.GetJoinedRooms();
                 }
                 catch (MatrixException e) {
-                    if(e is {ErrorCode: "M_FORBIDDEN"}) continue;
+                    if (e is { ErrorCode: "M_FORBIDDEN" }) continue;
                     throw;
                 }
 
