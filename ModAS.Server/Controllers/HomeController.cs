@@ -1,15 +1,13 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace WebApplication1.Controllers;
+namespace ModAS.Server.Controllers;
 
 [ApiController]
-public class HomeController : Controller
-{
+public class HomeController : Controller {
     private readonly ILogger<HomeController> _logger;
 
-    public HomeController(ILogger<HomeController> logger)
-    {
+    public HomeController(ILogger<HomeController> logger) {
         _logger = logger;
     }
 

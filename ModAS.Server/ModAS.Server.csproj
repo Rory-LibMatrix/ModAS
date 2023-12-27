@@ -7,9 +7,16 @@
         <InvariantGlobalization>true</InvariantGlobalization>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <LangVersion>preview</LangVersion>
+        <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+        <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+        <StripSymbols>true</StripSymbols>
+        <OptimizationPreference>Speed</OptimizationPreference>
+        <TieredPGO>true</TieredPGO>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Elastic.Apm.AspNetCore" Version="1.25.2" />
+        <PackageReference Include="Elastic.Apm.NetCoreAll" Version="1.25.2" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
         <PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="6.5.0" />
@@ -17,6 +24,7 @@
     
     <ItemGroup>
         <ProjectReference Include="..\LibMatrix\LibMatrix\LibMatrix.csproj" />
+        <ProjectReference Include="..\ModAS.Classes\ModAS.Classes.csproj" />
     </ItemGroup>
 
 </Project>

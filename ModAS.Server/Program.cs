@@ -3,12 +3,17 @@ using Microsoft.OpenApi.Models;
 using ModAS.Server;
 using System.Diagnostics;
 using System.Text.Json;
+using Elastic.Apm;
+using Elastic.Apm.Api;
+using Elastic.Apm.AspNetCore;
+using Elastic.Apm.NetCoreAll;
 using LibMatrix;
 using LibMatrix.Services;
 using ModAS.Server.Services;
 using MxApiExtensions.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+// var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.AddControllers().AddJsonOptions(options => { options.JsonSerializerOptions.WriteIndented = true; });
 ///add wwwroot
@@ -30,7 +35,9 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddSingleton<ModASConfiguration>();
 
 builder.Services.AddSingleton<AuthenticationService>();
-builder.Services.AddSingleton<AuthenticatedHomeserverProviderService>();
+builder.Services.AddSingleton<UserProviderService>();
+builder.Services.AddSingleton<RoomContextService>();
+builder.Services.AddSingleton<RoomStateCacheService>();
 // builder.Services.AddScoped<UserContextService>();
 
 builder.Services.AddSingleton<TieredStorageService>(x => {
@@ -82,7 +89,6 @@ builder.Services.AddCors(options => {
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 // if (app.Environment.IsDevelopment()) {
 app.UseSwagger();
 app.UseSwaggerUI(c => {
@@ -98,6 +104,15 @@ app.UseReDoc(c => {
     c.RequiredPropsFirst();
 });
 // }
+
+app.UseAllElasticApm(builder.Configuration);
+Agent.AddFilter((ISpan span) => {
+    if (span.Context.Http is not null && span.Name.StartsWith($"{span.Context.Http.Method} ")) {
+        span.Name = $"{span.Context.Http.Method} {span.Context.Http.Url}";
+    }
+
+    return span;
+});
 
 ///wwwroot
 app.UseFileServer();
