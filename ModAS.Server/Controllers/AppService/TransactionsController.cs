@@ -15,6 +15,7 @@ using MxApiExtensions.Services;
 namespace ModAS.Server.Controllers.AppService;
 
 [ApiController]
+[ApiExplorerSettings(IgnoreApi = true)] //hide from swagger
 public class TransactionsController(
     AppServiceRegistration asr,
     ModASConfiguration config,

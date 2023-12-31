@@ -25,16 +25,12 @@ public class RoomQueryController(UserProviderService ahsProvider, ModASConfigura
         getUsersSpan.End();
 
         var collectRoomsSpan = currentTransaction.StartSpan("collectRooms", ApiConstants.TypeApp);
-        // var userRoomLists = validUsers.Values.Select(ahs => ahs.GetJoinedRooms()).ToList();
-        // await Task.WhenAll(userRoomLists);
-        // var rooms = userRoomLists.SelectMany(r => r.Result).DistinctBy(x => x.RoomId).ToFrozenSet();
         var roomsTasks = validUsers.Values.Select(u => userProviderService.GetUserRoomsCached(u.WhoAmI.UserId)).ToList();
         await Task.WhenAll(roomsTasks);
         var rooms = roomsTasks.SelectMany(r => r.Result).DistinctBy(x => x.RoomId).ToFrozenSet();
         collectRoomsSpan.End();
 
         var collectRoomStateSpan = currentTransaction.StartSpan("collectRoomState", ApiConstants.TypeApp);
-        //make sure we lock!!!!
         await stateCacheService.EnsureCachedFromRoomList(rooms);
         var roomStateTasks = rooms.Select(GetRoomState).ToAsyncEnumerable();
         var awaitRoomStateSpan = currentTransaction.StartSpan("fetchRoomState", ApiConstants.TypeApp);
@@ -46,6 +42,7 @@ public class RoomQueryController(UserProviderService ahsProvider, ModASConfigura
             var roomMembers = roomState.Where(r => r.Type == RoomMemberEventContent.EventId).ToFrozenSet();
             var localRoomMembers = roomMembers.Where(x => x.StateKey.EndsWith(':' + config.ServerName)).ToFrozenSet();
             var nonMemberState = roomState.Where(x => !roomMembers.Contains(x)).ToFrozenSet();
+            var creationEvent = nonMemberState.FirstOrDefault(r => r.Type == RoomCreateEventContent.EventId);
             filterStateEventsSpan.End();
             var buildResultSpan = currentTransaction.StartSpan($"buildResult {room.RoomId}", ApiConstants.TypeApp);
 
@@ -56,21 +53,21 @@ public class RoomQueryController(UserProviderService ahsProvider, ModASConfigura
                 //members
                 TotalMembers = roomMembers.Count,
                 TotalLocalMembers = localRoomMembers.Count,
-                JoinedMembers = roomMembers.Count(x => (x.TypedContent as RoomMemberEventContent)?.Membership == "join"),
-                JoinedLocalMembers = localRoomMembers.Count(x => (x.TypedContent as RoomMemberEventContent)?.Membership == "join"),
+                JoinedMembers = roomMembers.Count(x => x.RawContent?["membership"]?.GetValue<string>() == "join"),
+                JoinedLocalMembers = localRoomMembers.Count(x => x.RawContent?["membership"]?.GetValue<string>() == "join"),
                 //-members
                 //creation event
-                Creator = nonMemberState.FirstOrDefault(r => r.Type == RoomCreateEventContent.EventId)?.Sender,
-                Version = nonMemberState.FirstOrDefault(r => r.Type == RoomCreateEventContent.EventId)?.RawContent?["room_version"]?.GetValue<string>(),
-                Type = nonMemberState.FirstOrDefault(r => r.Type == RoomCreateEventContent.EventId)?.RawContent?["type"]?.GetValue<string>(),
-                Federatable = nonMemberState.FirstOrDefault(r => r.Type == RoomCreateEventContent.EventId)?.RawContent?["m.federate"]?.GetValue<bool>() ?? true,
+                Creator = creationEvent!.Sender,
+                Version = creationEvent.RawContent?["room_version"]?.GetValue<string>(),
+                Type = creationEvent.RawContent?["type"]?.GetValue<string>(),
+                Federatable = creationEvent.RawContent?["m.federate"]?.GetValue<bool>() ?? true,
                 //-creation event
                 Name = nonMemberState.FirstOrDefault(r => r.Type == RoomNameEventContent.EventId)?.RawContent?["name"]?.GetValue<string>(),
                 CanonicalAlias = nonMemberState.FirstOrDefault(r => r.Type == RoomCanonicalAliasEventContent.EventId)?.RawContent?["alias"]?.GetValue<string>(),
-                JoinRules = nonMemberState.FirstOrDefault(r => r.Type == RoomJoinRulesEventContent.EventId)?.RawContent?["join_rule"]?.GetValue<string>(),
                 GuestAccess = nonMemberState.FirstOrDefault(r => r.Type == RoomGuestAccessEventContent.EventId)?.RawContent?["guest_access"]?.GetValue<string>(),
                 HistoryVisibility =
                     nonMemberState.FirstOrDefault(r => r.Type == RoomHistoryVisibilityEventContent.EventId)?.RawContent?["history_visibility"]?.GetValue<string>(),
+                JoinRules = nonMemberState.FirstOrDefault(r => r.Type == RoomJoinRulesEventContent.EventId)?.RawContent?["join_rule"]?.GetValue<string>(),
                 Public = nonMemberState.FirstOrDefault(r => r.Type == RoomJoinRulesEventContent.EventId)?.RawContent?["join_rule"]?.GetValue<string>() == "public",
                 Encryption = nonMemberState.FirstOrDefault(r => r.Type == RoomEncryptionEventContent.EventId)?.RawContent?["algorithm"]?.GetValue<string>(),
                 AvatarUrl = nonMemberState.FirstOrDefault(r => r.Type == RoomAvatarEventContent.EventId)?.RawContent?["url"]?.GetValue<string>(),

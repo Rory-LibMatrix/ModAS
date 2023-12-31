@@ -2,10 +2,13 @@
 
 cat <<EOF > ModAS.Server/Version.cs
 namespace Modas.Server;
+#pragma warning disable CS1591
 public static class Version
 {
-    public const string Text = "$(git rev-parse --abbrev-ref HEAD)@$(git describe --tags --abbrev=0)+`git log $(git describe --tags --abbrev=0)..HEAD --oneline`";
+    public const string VersionString = "$(git describe --tags --abbrev=0)-$(git rev-parse --abbrev-ref HEAD)(+$(git log $(git describe --tags --abbrev=0)..HEAD --oneline | wc -l)) ($(git rev-parse --short HEAD))";
+    public const string Branch = "$(git rev-parse --abbrev-ref HEAD)";
+    public const string Tag = "$(git describe --tags --abbrev=0)";
+    public const string Commit = "$(git rev-parse HEAD)";
 }
+#pragma warning restore CS1591
 EOF
-
-#git log $(git describe --tags --abbrev=0)..HEAD --oneline

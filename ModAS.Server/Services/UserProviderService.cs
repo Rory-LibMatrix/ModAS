@@ -11,7 +11,6 @@ using MxApiExtensions.Services;
 namespace ModAS.Server.Services;
 
 public class UserProviderService(
-    AuthenticationService authenticationService,
     HomeserverProviderService homeserverProviderService,
     IHttpContextAccessor request,
     ModASConfiguration config,

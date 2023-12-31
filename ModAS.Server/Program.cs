@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Text.Json;
 using Elastic.Apm;
 using Elastic.Apm.Api;
-using Elastic.Apm.AspNetCore;
 using Elastic.Apm.NetCoreAll;
 using LibMatrix;
 using LibMatrix.Services;
@@ -13,14 +12,10 @@ using ModAS.Server.Authentication;
 using ModAS.Server.Services;
 using MxApiExtensions.Services;
 
-// var builder = WebApplication.CreateBuilder(args);
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.AddControllers().AddJsonOptions(options => { options.JsonSerializerOptions.WriteIndented = true; });
-///add wwwroot
-// builder.Services.AddDirectoryBrowser();
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c => {
     c.SwaggerDoc("v1", new OpenApiInfo() {
@@ -35,19 +30,15 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddSingleton<ModASConfiguration>();
 
-builder.Services.AddSingleton<AuthenticationService>();
 builder.Services.AddSingleton<UserProviderService>();
 builder.Services.AddSingleton<RoomContextService>();
 builder.Services.AddSingleton<RoomStateCacheService>();
 // builder.Services.AddScoped<UserContextService>();
 
-builder.Services.AddSingleton<TieredStorageService>(x => {
-    var config = x.GetRequiredService<ModASConfiguration>();
-    return new TieredStorageService(
-        cacheStorageProvider: new FileStorageProvider("/run"),
-        dataStorageProvider: new FileStorageProvider("/run")
-    );
-});
+builder.Services.AddSingleton<TieredStorageService>(x => new TieredStorageService(
+    cacheStorageProvider: new FileStorageProvider("/run"),
+    dataStorageProvider: new FileStorageProvider("/run")
+));
 builder.Services.AddRoryLibMatrixServices();
 
 //trace init time for app service registration
@@ -116,8 +107,6 @@ Agent.AddFilter((ISpan span) => {
 });
 
 app.UseFileServer();
-
-app.UseRouting();
 
 app.UseCors("Open");
 

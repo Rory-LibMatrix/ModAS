@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 namespace ModAS.Server;
 
 public class AppServiceRegistration {
-    private const string ValidChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~+/";
+    private const string ValidChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private const string ExtendedValidChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~+/";
 
     [JsonPropertyName("as_token")]
@@ -16,7 +16,7 @@ public class AppServiceRegistration {
     public string HomeserverToken { get; set; } = RandomNumberGenerator.GetString(ExtendedValidChars, RandomNumberGenerator.GetInt32(512, 1024));
 
     [JsonPropertyName("id")]
-    public string Id { get; set; } = "ModAS-"+RandomNumberGenerator.GetString(ValidChars, 5);
+    public string Id { get; set; } = "ModAS-" + RandomNumberGenerator.GetString(ValidChars, 5);
 
     [JsonPropertyName("namespaces")]
     public NamespacesObject Namespaces { get; set; } = new() {
