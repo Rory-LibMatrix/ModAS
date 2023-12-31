@@ -2,16 +2,28 @@ using System.Collections.Frozen;
 using ArcaneLibs.Extensions;
 using Elastic.Apm;
 using Elastic.Apm.Api;
-using LibMatrix;
 using LibMatrix.Homeservers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ModAS.Server.Attributes;
 using ModAS.Server.Services;
 using MxApiExtensions.Services;
 
-namespace ModAS.Server.Controllers;
+namespace ModAS.Server.Controllers.Debug;
 
+/// <summary>
+///   Provides debugging endpoints.
+/// </summary>
+/// <param name="config"><inheritdoc cref="ModASConfiguration"/></param>
+/// <param name="authHsProvider"><inheritdoc cref="UserProviderService"/></param>
+/// <param name="roomContextService"><inheritdoc cref="RoomContextService"/></param>
 [ApiController]
+[UserAuth(AnyRoles = AuthRoles.Developer | AuthRoles.Administrator)]
 public class DebugController(ModASConfiguration config, UserProviderService authHsProvider, RoomContextService roomContextService) : ControllerBase {
+    /// <summary>
+    ///  Returns a JSON object containing the request and response headers.
+    /// </summary>
+    /// <returns>JSON object with request and partial response headers.</returns>
     [HttpGet("/_matrix/_modas/debug")]
     public IActionResult Index() {
         return Ok(new {
@@ -20,6 +32,10 @@ public class DebugController(ModASConfiguration config, UserProviderService auth
         });
     }
 
+    /// <summary>
+    ///  Returns a JSON object containing the configuration.
+    /// </summary>
+    /// <returns></returns>
     [HttpGet("/_matrix/_modas/debug/config")]
     public IActionResult Config() {
         return Ok(config);
@@ -32,17 +48,17 @@ public class DebugController(ModASConfiguration config, UserProviderService auth
 
     [HttpGet("/_matrix/_modas/debug/test_locate_users")]
     public async IAsyncEnumerable<string> TestLocateUsers([FromQuery] string startUser) {
-        List<AuthenticatedHomeserverGeneric> foundUsers = (await authHsProvider.GetValidUsers()).Select(x=>x.Value).ToList();
-        if(!foundUsers.Any(x=>x.WhoAmI.UserId == startUser)) {
+        List<AuthenticatedHomeserverGeneric> foundUsers = (await authHsProvider.GetValidUsers()).Select(x => x.Value).ToList();
+        if (!foundUsers.Any(x => x.WhoAmI.UserId == startUser)) {
             foundUsers.Add(await authHsProvider.GetImpersonatedHomeserver(startUser));
         }
-        
+
         List<string> processedRooms = [], processedUsers = [];
         var foundNew = true;
         while (foundNew) {
             var span1 = currentTransaction.StartSpan("iterateUsers", ApiConstants.TypeApp);
             foundNew = false;
-            var usersToProcess = foundUsers.Where(x => !processedUsers.Any(y=>x.WhoAmI.UserId == y)).ToFrozenSet();
+            var usersToProcess = foundUsers.Where(x => !processedUsers.Any(y => x.WhoAmI.UserId == y)).ToFrozenSet();
             Console.WriteLine($"Got {usersToProcess.Count} users: {string.Join(", ", usersToProcess)}");
 
             var rooms = usersToProcess.Select(async x => await x.GetJoinedRooms());
@@ -54,7 +70,7 @@ public class DebugController(ModASConfiguration config, UserProviderService auth
                     processedRooms.Add(room.RoomId);
                     var roomMembers = await room.GetMembersListAsync(false);
                     foreach (var roomMember in roomMembers) {
-                        if (roomMember.StateKey.EndsWith(':' + config.ServerName) && !foundUsers.Any(x=>x.WhoAmI.UserId == roomMember.StateKey)) {
+                        if (roomMember.StateKey.EndsWith(':' + config.ServerName) && !foundUsers.Any(x => x.WhoAmI.UserId == roomMember.StateKey)) {
                             foundUsers.Add(await authHsProvider.GetImpersonatedHomeserver(roomMember.StateKey));
                             foundNew = true;
                             yield return roomMember.StateKey;

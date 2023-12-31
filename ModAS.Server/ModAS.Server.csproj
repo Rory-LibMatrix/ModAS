@@ -12,6 +12,7 @@
         <StripSymbols>true</StripSymbols>
         <OptimizationPreference>Speed</OptimizationPreference>
         <TieredPGO>true</TieredPGO>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+cat <<EOF > ModAS.Server/Version.cs
+namespace Modas.Server;
+public static class Version
+{
+    public const string Text = "$(git rev-parse --abbrev-ref HEAD)@$(git describe --tags --abbrev=0)+`git log $(git describe --tags --abbrev=0)..HEAD --oneline`";
+}
+EOF
+
+#git log $(git describe --tags --abbrev=0)..HEAD --oneline

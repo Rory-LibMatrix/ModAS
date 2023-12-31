@@ -15,7 +15,7 @@ using MxApiExtensions.Services;
 namespace ModAS.Server.Controllers.AppService;
 
 [ApiController]
-public class TransactionsController(
+public class PingController(
     AppServiceRegistration asr,
     ModASConfiguration config,
     UserProviderService userProvider,
@@ -29,16 +29,6 @@ public class TransactionsController(
     [HttpPut("/_matrix/app/v1/transactions/{txnId}")]
     [UserAuth(AuthType = AuthType.Server)]
     public async Task<IActionResult> PutTransactions(string txnId) {
-        // if (!Request.Headers.ContainsKey("Authorization")) {
-        //     Console.WriteLine("PutTransaction: missing authorization header");
-        //     return Unauthorized();
-        // }
-        //
-        // if (Request.GetTypedHeaders().Get<AuthenticationHeaderValue>("Authorization")?.Parameter != asr.HomeserverToken) {
-        //     Console.WriteLine($"PutTransaction: invalid authorization header: {Request.Headers["Authorization"]}");
-        //     return Unauthorized();
-        // }
-
         var data = await JsonSerializer.DeserializeAsync<EventList>(Request.Body);
         Console.WriteLine(
             $"PutTransaction: {txnId}: {data.Events.Count} events, {Util.BytesToString(Request.Headers.ContentLength ?? Request.ContentLength ?? Request.Body.Length)}");

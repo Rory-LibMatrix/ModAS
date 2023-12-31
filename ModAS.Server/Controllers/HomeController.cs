@@ -3,17 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ModAS.Server.Controllers;
 
+/// <summary>
+///    Manages the visual homepage.
+/// </summary>
 [ApiController]
 public class HomeController : Controller {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger) {
-        _logger = logger;
-    }
-
+    /// <inheritdoc cref="HomeController"/>
     [HttpGet("/_matrix/_modas")]
     public IActionResult Index() {
-        //return wwwroot/index.html
         return LocalRedirect("/index.html");
     }
 }

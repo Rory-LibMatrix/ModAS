@@ -1,20 +1,28 @@
+using System.Net.Http.Headers;
 using LibMatrix;
 using LibMatrix.Services;
+using MxApiExtensions.Extensions;
 using MxApiExtensions.Services;
 
 namespace ModAS.Server.Services;
 
-public class AuthenticationService(ILogger<AuthenticationService> logger, ModASConfiguration config, IHttpContextAccessor request, HomeserverProviderService homeserverProviderService) {
+public class AuthenticationService(
+    ILogger<AuthenticationService> logger,
+    ModASConfiguration config,
+    IHttpContextAccessor request,
+    HomeserverProviderService homeserverProviderService) {
     private readonly HttpRequest _request = request.HttpContext!.Request;
 
     private static Dictionary<string, string> _tokenMap = new();
 
     internal string? GetToken(bool fail = true) {
-        string? token;
-        if (_request.Headers.TryGetValue("Authorization", out var tokens)) {
-            token = tokens.FirstOrDefault()?[7..];
+        //_request.GetTypedHeaders().Get<AuthenticationHeaderValue>("Authorization")?.Parameter != asr.HomeserverToken
+
+        string? token = null;
+        if (_request.GetTypedHeaders().TryGet<AuthenticationHeaderValue>("Authorization", out var authHeader) && !string.IsNullOrWhiteSpace(authHeader?.Parameter)) {
+            token = authHeader.Parameter;
         }
-        else {
+        else if (_request.Query.ContainsKey("access_token")) {
             token = _request.Query["access_token"];
         }
 
@@ -47,18 +55,13 @@ public class AuthenticationService(ILogger<AuthenticationService> logger, ModASC
                 .ToDictionary(l => l[0], l => l[1]);
         }
 
-
         if (_tokenMap.TryGetValue(token, out var mxid)) return mxid;
 
-        var lookupTasks = new Dictionary<string, Task<string?>>();
-        
-        
         logger.LogInformation("Looking up mxid for token {}", token);
         var hs = await homeserverProviderService.GetAuthenticatedWithToken(config.ServerName, token, config.HomeserverUrl);
         try {
             var res = hs.WhoAmI.UserId;
             logger.LogInformation("Got mxid {} for token {}", res, token);
-            await SaveMxidForToken(token, mxid);
 
             return res;
         }
@@ -69,11 +72,5 @@ public class AuthenticationService(ILogger<AuthenticationService> logger, ModASC
 
             throw;
         }
-    }
-
-
-    public async Task SaveMxidForToken(string token, string mxid) {
-        _tokenMap.Add(token, mxid);
-        await File.AppendAllLinesAsync("token_map", new[] { $"{token}\t{mxid}" });
     }
 }

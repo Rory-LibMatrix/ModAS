@@ -9,6 +9,7 @@ using Elastic.Apm.AspNetCore;
 using Elastic.Apm.NetCoreAll;
 using LibMatrix;
 using LibMatrix.Services;
+using ModAS.Server.Authentication;
 using ModAS.Server.Services;
 using MxApiExtensions.Services;
 
@@ -114,13 +115,14 @@ Agent.AddFilter((ISpan span) => {
     return span;
 });
 
-///wwwroot
 app.UseFileServer();
-// app.UseStaticFiles();
-// app.UseDirectoryBrowser();
+
+app.UseRouting();
 
 app.UseCors("Open");
 
 app.MapControllers();
+
+app.UseMiddleware<AuthMiddleware>();
 
 app.Run();
